@@ -40,20 +40,39 @@ sep_old <-
          title = course_title,
          name = course_name,
          department = course_department) %>% 
+  
+  group_by(id, title, department, name) %>%
+  summarize(u_grad = sum(u_grad), .groups = "drop") %>%
   filter(u_grad > 10)
+
+view(sep_old)
 
 # But this is not correct! Look for Gov 50: Data. What do you see? What can you
 # do to clean it up?
 ```
 
-
-
-
 ### Scene 1
 
 **Prompt:** Read in and clean the new data, creating an object called `sep_new`. 
 
+```{r}
+sep_new <- read_excel("new_data/class_enrollment_summary_by_term_9-21-2020.xlsx", 
+                      skip = 3) %>%
+  clean_names() %>% 
+  filter(! is.na(course_title)) %>% 
+  select(-grad, -non_degree, -x_reg, -vus, -employee, 
+         -withdraw, -total, -instructor_full_name, -course_section_code) %>%
+  rename(id = course_id,
+         title = course_title,
+         name = course_name,
+         department = course_department) %>% 
+  group_by(id, title, department, name) %>%
+  summarize(u_grad = sum(u_grad), .groups = "drop") %>%
+  filter(u_grad > 10)
+  
+view(sep_new)
 
+```
 
 ### Scene 2
 
@@ -61,17 +80,41 @@ sep_old <-
 
 Before we start on the model, Wisdom suggests we should:
 
+```{r}
+# Wisdom would suggest that we need to make smart assumptions which make the world 
+# a little easier to comprehend. We have already made some smart assumptions with
+# this data set to simplify it, for example we have filtered the data and removed data 
+# with NA. If we didn't make assumptions we would have too much complicated data to work 
+# with, for example we would have way too many treatments to plot onto a chart and too 
+# many variables to account for. Therefore we use wisdom to simplify our data. One of the 
+# assumptions we would also make is that the Dean cares about the drop in undergraduate 
+# enrollment. 
+```
 
 After we have a model, Temperance suggests we should:
 
-
+```{r}
+# Temperance is used to recognize the limitations of our data. These enrollment 
+# results are dependent on the time that we are collecting the data. For example, 
+# the data changed from last class to this class, so it could change from today to 
+# tomorrow as well. There is also variation in individuals that could influence their
+# enrollment decisions that we cannot account for in our data. 
+```
 
 ### Scene 3
 
 **Prompt:** Which classes had the biggest increases and decreases in undergraduate enrollments between September 1 and today? Make a graphic that shows the 5 biggest increases and decreases. Make it look nice.
 
+```{r}
+enrollment <- inner_join(sep_new, sep_old, by = c("id", "name", "department", "title")) %>%
+  mutate(change = u_grad.x - u_grad.y) %>%
+  mutate(abs_change = abs(change)) %>%
+  arrange(desc(abs_change))
 
 
+enrollment
+
+```
 
 
 ## Scene 4
